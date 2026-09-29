@@ -351,8 +351,14 @@ void render_desenhar_mesa(void) {
 
 /* Renderização principal da cena 3D */
 void render_desenhar_cena(const EloMaluco* elo, const Camera* cam, bool exibirHUD, int largura, int altura) {
-    /* 1. Desenha a mesa de suporte */
+    /* 1. Desenha a mesa de suporte (estática) */
     render_desenhar_mesa();
+
+    glPushMatrix();
+    /* Rotação Contínua do Puzzle (Demonstração de Rotação 3D - Turntable) */
+    if (elo->modoTurntable) {
+        glRotatef(elo->anguloTurntable, 0.0f, 1.0f, 0.0f);
+    }
 
     /* 2. Desenha o núcleo central e os anéis estruturais */
     render_desenhar_torre_central();
@@ -365,6 +371,7 @@ void render_desenhar_cena(const EloMaluco* elo, const Camera* cam, bool exibirHU
             render_desenhar_peca_3d(&elo->grade[i][j], i, j, elo->resolvido);
         }
     }
+    glPopMatrix();
 
     /* 4. Desenha o HUD caso ativado */
     if (exibirHUD) {
@@ -399,23 +406,23 @@ void render_desenhar_hud(const EloMaluco* elo, const Camera* cam, int largura, i
     /* Fundo translúcido para o painel de controles */
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(0.05f, 0.06f, 0.08f, 0.75f);
+    glColor4f(0.05f, 0.06f, 0.08f, 0.80f);
     glBegin(GL_QUADS);
         glVertex2f(10, altura - 10);
-        glVertex2f(340, altura - 10);
-        glVertex2f(340, altura - 230);
-        glVertex2f(10, altura - 230);
+        glVertex2f(370, altura - 10);
+        glVertex2f(370, altura - 300);
+        glVertex2f(10, altura - 300);
     glEnd();
     glDisable(GL_BLEND);
 
     /* Moldura do painel */
-    glColor3f(0.3f, 0.4f, 0.5f);
-    glLineWidth(1.0f);
+    glColor3f(0.35f, 0.45f, 0.55f);
+    glLineWidth(1.2f);
     glBegin(GL_LINE_LOOP);
         glVertex2f(10, altura - 10);
-        glVertex2f(340, altura - 10);
-        glVertex2f(340, altura - 230);
-        glVertex2f(10, altura - 230);
+        glVertex2f(370, altura - 10);
+        glVertex2f(370, altura - 300);
+        glVertex2f(10, altura - 300);
     glEnd();
 
     /* Textos informativos */
@@ -425,24 +432,36 @@ void render_desenhar_hud(const EloMaluco* elo, const Camera* cam, int largura, i
     char buffer[128];
     if (elo->resolvido) {
         glColor3f(0.2f, 0.95f, 0.3f);
-        desenhar_texto_2d(20, altura - 52, "STATUS: RESOLVIDO! PARABENS!");
+        desenhar_texto_2d(20, altura - 50, "STATUS: RESOLVIDO! (PARABENS)");
+    } else if (elo->modoAutoPlay) {
+        glColor3f(0.3f, 0.7f, 1.0f);
+        snprintf(buffer, sizeof(buffer), "STATUS: EXECUTANDO SOLUCAO (%d/%d)", elo->indiceFila, elo->totalFila);
+        desenhar_texto_2d(20, altura - 50, buffer);
     } else {
         glColor3f(0.95f, 0.5f, 0.2f);
-        desenhar_texto_2d(20, altura - 52, "STATUS: EM JOGO (EMBARALHADO)");
+        desenhar_texto_2d(20, altura - 50, "STATUS: EM JOGO (EMBARALHADO)");
     }
 
     glColor3f(0.9f, 0.9f, 0.9f);
-    snprintf(buffer, sizeof(buffer), "Movimentos realizados: %d", elo->totalMovimentos);
-    desenhar_texto_2d(20, altura - 72, buffer);
+    snprintf(buffer, sizeof(buffer), "Movimentos: %d  |  Turntable: %s", 
+             elo->totalMovimentos, elo->modoTurntable ? "LIGADO (Rotacao 3D)" : "DESLIGADO");
+    desenhar_texto_2d(20, altura - 70, buffer);
 
-    glColor3f(0.7f, 0.8f, 0.9f);
-    desenhar_texto_2d(20, altura - 100, "[D / A] Girar linha Superior (Dir / Esq)");
-    desenhar_texto_2d(20, altura - 118, "[L / J] Girar linha Inferior (Dir / Esq)");
-    desenhar_texto_2d(20, altura - 136, "[W / S] Mover face (Cima / Baixo)");
-    desenhar_texto_2d(20, altura - 154, "[E] Embaralhar  |  [R] Resetar");
-    desenhar_texto_2d(20, altura - 172, "[Mouse Esq + Arrastar] Rotacao da Camera");
-    desenhar_texto_2d(20, altura - 190, "[Scroll / +/-] Zoom da Camera");
-    desenhar_texto_2d(20, altura - 208, "[H] Ocultar/Exibir este painel");
+    /* Lista detalhada de comandos */
+    glColor3f(0.75f, 0.85f, 0.95f);
+    desenhar_texto_2d(20, altura - 95,  "[D / A] Girar linha Superior (Dir / Esq)");
+    desenhar_texto_2d(20, altura - 113, "[L / J] Girar linha Inferior (Dir / Esq)");
+    desenhar_texto_2d(20, altura - 131, "[W / S] Mover face (Cima / Baixo)");
+    desenhar_texto_2d(20, altura - 149, "[E] Embaralhar  |  [R] Resetar");
+    desenhar_texto_2d(20, altura - 167, "[Espaco] Solucao Demonstrativa (Auto-play)");
+    desenhar_texto_2d(20, altura - 185, "[T] Alternar Modo Turntable (Rotacao)");
+    desenhar_texto_2d(20, altura - 203, "[P / Tab] Selecionar e Pulsar Peca (Escala)");
+    desenhar_texto_2d(20, altura - 221, "[Mouse Esq + Arrastar] Rotacao da Camera");
+    desenhar_texto_2d(20, altura - 239, "[Scroll / +/-] Zoom / Escala da Camera");
+    desenhar_texto_2d(20, altura - 257, "[C] Resetar Camera  |  [H] Alternar HUD");
+
+    glColor3f(0.6f, 0.65f, 0.7f);
+    desenhar_texto_2d(20, altura - 285, "Transformacoes: Translacao, Rotacao e Escala");
 
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);

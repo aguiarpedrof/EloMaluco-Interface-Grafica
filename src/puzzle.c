@@ -330,16 +330,38 @@ void puzzle_proximo_passo_demo(EloMaluco* elo) {
     }
 }
 
+void puzzle_alternar_turntable(EloMaluco* elo) {
+    elo->modoTurntable = !elo->modoTurntable;
+}
+
+void puzzle_selecionar_proxima_peca(EloMaluco* elo) {
+    elo->colunaSelecionada++;
+    if (elo->colunaSelecionada >= COLUNAS) {
+        elo->colunaSelecionada = 0;
+        elo->linhaSelecionada = (elo->linhaSelecionada + 1) % LINHAS;
+    }
+}
+
 /* Interpolação Linear (LERP) para animações suaves (~60 FPS) */
 void puzzle_atualizar_animacao(EloMaluco* elo, float deltaTempo) {
     const float taxa = 12.0f * deltaTempo; /* Velocidade do LERP */
     bool aindaMovendo = false;
 
+    elo->tempoTotal += deltaTempo;
+
+    /* Atualiza rotação do modo Turntable contínuo */
+    if (elo->modoTurntable) {
+        elo->anguloTurntable += 30.0f * deltaTempo;
+        if (elo->anguloTurntable >= 360.0f) {
+            elo->anguloTurntable -= 360.0f;
+        }
+    }
+
     for (int i = 0; i < LINHAS; i++) {
         for (int j = 0; j < COLUNAS; j++) {
             Peca* p = &elo->grade[i][j];
 
-            /* Interpolação espacial X, Y, Z */
+            /* Interpolação espacial X, Y, Z (Translação geométrica) */
             float dx = p->targetX - p->posX;
             float dy = p->targetY - p->posY;
             float dz = p->targetZ - p->posZ;
@@ -355,7 +377,7 @@ void puzzle_atualizar_animacao(EloMaluco* elo, float deltaTempo) {
                 p->posZ = p->targetZ;
             }
 
-            /* Interpolação angular RotY */
+            /* Interpolação angular RotY (Rotação geométrica) */
             float drot = p->targetRotY - p->rotY;
             if (fabsf(drot) > 0.1f) {
                 p->rotY += drot * fminf(taxa, 1.0f);
@@ -363,8 +385,29 @@ void puzzle_atualizar_animacao(EloMaluco* elo, float deltaTempo) {
             } else {
                 p->rotY = p->targetRotY;
             }
+
+            /* Atualização do Fator de Escala (Transformação de Escala) */
+            if (elo->resolvido) {
+                /* Efeito de pulsação festiva/vitória com defasagem espacial */
+                float fase = elo->tempoTotal * 5.0f + (float)i * 0.8f + (float)j * 0.4f;
+                p->escala = 1.0f + 0.08f * sinf(fase);
+            } else if (i == elo->linhaSelecionada && j == elo->colunaSelecionada) {
+                /* Destaque interativo por escala da peça selecionada */
+                p->escala = 1.15f + 0.04f * sinf(elo->tempoTotal * 8.0f);
+            } else {
+                p->escala = 1.0f;
+            }
         }
     }
 
     elo->animando = aindaMovendo;
+
+    /* Avanço automático dos passos no modo AutoPlay / Demonstração */
+    if (elo->modoAutoPlay) {
+        elo->timerPassoAutoPlay += deltaTempo;
+        if (elo->timerPassoAutoPlay >= 0.40f && !aindaMovendo) {
+            elo->timerPassoAutoPlay = 0.0f;
+            puzzle_proximo_passo_demo(elo);
+        }
+    }
 }

@@ -58,18 +58,30 @@ typedef struct {
     bool resolvido;
     bool animando;
     float progressoAnimacao;      /* 0.0f a 1.0f */
+    float tempoTotal;             /* Tempo acumulado em segundos */
+    
+    /* Demonstração de Transformação de Rotação Contínua (Turntable) */
+    bool modoTurntable;
+    float anguloTurntable;
+
+    /* Demonstração de Transformação de Escala Interativa */
+    int linhaSelecionada;
+    int colunaSelecionada;
     
     /* Fila de movimentos automáticos (para demonstração/solução/embaralhamento) */
     char filaMovimentos[256][4];
     int totalFila;
     int indiceFila;
     bool modoAutoPlay;
+    float timerPassoAutoPlay;
 } EloMaluco;
 
 /* Funções de Inicialização e Manipulação do Jogo */
 void puzzle_inicializar(EloMaluco* elo);
 void puzzle_resetar(EloMaluco* elo);
 bool puzzle_eh_estado_objetivo(const EloMaluco* elo);
+void puzzle_alternar_turntable(EloMaluco* elo);
+void puzzle_selecionar_proxima_peca(EloMaluco* elo);
 
 /* Movimentos Oficiais do Elo Maluco */
 bool puzzle_rotacionar_superior_direita(EloMaluco* elo);  /* rsd */

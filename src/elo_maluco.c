@@ -120,6 +120,18 @@ static void callback_keyboard(unsigned char key, int x, int y) {
         case 'H':
             g_exibirHUD = !g_exibirHUD;
             break;
+        case 't':
+        case 'T':
+            puzzle_alternar_turntable(&g_elo);
+            break;
+        case 'p':
+        case 'P':
+        case '\t':
+            puzzle_selecionar_proxima_peca(&g_elo);
+            break;
+        case ' ':
+            puzzle_iniciar_solucao_demo(&g_elo);
+            break;
         case 'c':
         case 'C':
             camera_resetar(&g_camera);

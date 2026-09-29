@@ -1,0 +1,13 @@
+# Binaries
+*.exe
+*.o
+*.obj
+*.pdb
+
+# Build dirs
+build/
+bin/
+.vscode/
+
+# Legacy sub-repo
+astar-multithread-puzzle-solver/

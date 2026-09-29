@@ -5,6 +5,7 @@
  */
 
 #include "render.h"
+#include "texture.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -62,6 +63,9 @@ void render_inicializar(void) {
     GLfloat matEspecular[] = { 0.80f, 0.80f, 0.80f, 1.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matEspecular);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 64.0f);
+
+    /* Inicialização do sistema de texturas */
+    texture_inicializar();
 }
 
 /* Desenha o cilindro central metálico onde as peças se movimentam */
@@ -87,57 +91,71 @@ void render_desenhar_torre_central(void) {
     glEnd();
 }
 
-/* Desenha anéis metálicos da base e do topo */
+/* Desenha anéis metálicos da base e do topo com textura de metal */
 void render_desenhar_base_e_topo(void) {
     float raioBase = 1.55f;
     float alturaAnel = 0.22f;
     float yTopo = ALTURA_TORRE_TOTAL * 0.5f + 0.05f;
     float yBase = -ALTURA_TORRE_TOTAL * 0.5f - 0.05f;
 
-    /* Cor metálica grafite com bordas douradas */
-    glColor3f(0.28f, 0.30f, 0.35f);
+    GLuint texMetal = texture_obter_id(TEXTURA_METAL_ANEL);
+    if (texMetal > 0) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, texMetal);
+        glColor3f(0.85f, 0.85f, 0.90f);
+    } else {
+        glColor3f(0.28f, 0.30f, 0.35f);
+    }
 
     /* Anel Superior */
     glPushMatrix();
     glTranslatef(0.0f, yTopo, 0.0f);
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= SEGMENTOS_CIRCULO; i++) {
+        float u = (float)i / (float)SEGMENTOS_CIRCULO;
         float ang = (float)i * 2.0f * (float)M_PI / (float)SEGMENTOS_CIRCULO;
         float nx = sinf(ang);
         float nz = cosf(ang);
         glNormal3f(nx, 0.0f, nz);
-        glVertex3f(raioBase * nx, alturaAnel * 0.5f, raioBase * nz);
-        glVertex3f(raioBase * nx, -alturaAnel * 0.5f, raioBase * nz);
+        glTexCoord2f(u * 2.0f, 1.0f); glVertex3f(raioBase * nx, alturaAnel * 0.5f, raioBase * nz);
+        glTexCoord2f(u * 2.0f, 0.0f); glVertex3f(raioBase * nx, -alturaAnel * 0.5f, raioBase * nz);
     }
     glEnd();
     
     /* Tampa do topo */
-    glColor3f(0.22f, 0.24f, 0.28f);
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0.5f, 0.5f);
     glVertex3f(0.0f, alturaAnel * 0.5f, 0.0f);
     for (int i = 0; i <= SEGMENTOS_CIRCULO; i++) {
         float ang = (float)i * 2.0f * (float)M_PI / (float)SEGMENTOS_CIRCULO;
-        glVertex3f(raioBase * sinf(ang), alturaAnel * 0.5f, raioBase * cosf(ang));
+        float nx = sinf(ang);
+        float nz = cosf(ang);
+        glTexCoord2f(0.5f + 0.5f * nx, 0.5f + 0.5f * nz);
+        glVertex3f(raioBase * nx, alturaAnel * 0.5f, raioBase * nz);
     }
     glEnd();
     glPopMatrix();
 
     /* Anel Inferior (Pedestal) */
-    glColor3f(0.28f, 0.30f, 0.35f);
     glPushMatrix();
     glTranslatef(0.0f, yBase, 0.0f);
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= SEGMENTOS_CIRCULO; i++) {
+        float u = (float)i / (float)SEGMENTOS_CIRCULO;
         float ang = (float)i * 2.0f * (float)M_PI / (float)SEGMENTOS_CIRCULO;
         float nx = sinf(ang);
         float nz = cosf(ang);
         glNormal3f(nx, 0.0f, nz);
-        glVertex3f((raioBase + 0.15f) * nx, -alturaAnel * 0.5f, (raioBase + 0.15f) * nz);
-        glVertex3f(raioBase * nx, alturaAnel * 0.5f, raioBase * nz);
+        glTexCoord2f(u * 2.0f, 0.0f); glVertex3f((raioBase + 0.15f) * nx, -alturaAnel * 0.5f, (raioBase + 0.15f) * nz);
+        glTexCoord2f(u * 2.0f, 1.0f); glVertex3f(raioBase * nx, alturaAnel * 0.5f, raioBase * nz);
     }
     glEnd();
     glPopMatrix();
+
+    if (texMetal > 0) {
+        glDisable(GL_TEXTURE_2D);
+    }
 }
 
 /* Guias verticais que separam as 4 colunas mecânicas */
@@ -308,17 +326,27 @@ void render_desenhar_peca_3d(const Peca* peca, int linha, int coluna, bool resol
 void render_desenhar_mesa(void) {
     float yMesa = -ALTURA_TORRE_TOTAL * 0.5f - 0.28f;
     float tamanho = 12.0f;
+    GLuint texMadeira = texture_obter_id(TEXTURA_MESA_MADEIRA);
 
-    /* Mesa de madeira elegante */
-    glColor3f(0.35f, 0.22f, 0.14f);
+    if (texMadeira > 0) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, texMadeira);
+        glColor3f(1.0f, 1.0f, 1.0f);
+    } else {
+        glColor3f(0.35f, 0.22f, 0.14f);
+    }
 
     glBegin(GL_QUADS);
         glNormal3f(0.0f, 1.0f, 0.0f);
-        glVertex3f(-tamanho, yMesa, -tamanho);
-        glVertex3f(-tamanho, yMesa,  tamanho);
-        glVertex3f( tamanho, yMesa,  tamanho);
-        glVertex3f( tamanho, yMesa, -tamanho);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-tamanho, yMesa, -tamanho);
+        glTexCoord2f(0.0f, 6.0f); glVertex3f(-tamanho, yMesa,  tamanho);
+        glTexCoord2f(6.0f, 6.0f); glVertex3f( tamanho, yMesa,  tamanho);
+        glTexCoord2f(6.0f, 0.0f); glVertex3f( tamanho, yMesa, -tamanho);
     glEnd();
+
+    if (texMadeira > 0) {
+        glDisable(GL_TEXTURE_2D);
+    }
 }
 
 /* Renderização principal da cena 3D */

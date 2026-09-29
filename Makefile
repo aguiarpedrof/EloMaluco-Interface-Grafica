@@ -3,7 +3,7 @@
 
 CC = gcc
 CFLAGS = -Wall -O2 -std=c99
-SRC = src/elo_maluco.c src/puzzle.c src/camera.c
+SRC = src/elo_maluco.c src/puzzle.c src/camera.c src/render.c
 TARGET = elo_maluco
 
 ifeq ($(OS),Windows_NT)

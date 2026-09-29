@@ -3,7 +3,7 @@ echo =======================================================
 echo Compilando Elo Maluco 3D - Computacao Grafica (ECOI24)
 echo =======================================================
 
-gcc -Wall -O2 src/elo_maluco.c src/puzzle.c src/camera.c -o elo_maluco.exe -lglut -lopengl32 -lglu32 -lm
+gcc -Wall -O2 src/elo_maluco.c src/puzzle.c src/camera.c src/render.c -o elo_maluco.exe -lglut -lopengl32 -lglu32 -lm
 
 if %ERRORLEVEL% EQU 0 (
     echo [SUCESSO] Compilacao concluida com sucesso!

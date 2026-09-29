@@ -18,6 +18,7 @@
 
 #include "puzzle.h"
 #include "camera.h"
+#include "render.h"
 
 /* Instâncias globais */
 static EloMaluco g_elo;
@@ -46,6 +47,8 @@ static void inicializar_opengl(void) {
     /* Habilita normalização de normais para transformações com escala */
     glEnable(GL_NORMALIZE);
     glShadeModel(GL_SMOOTH);
+
+    render_inicializar();
 }
 
 static void callback_display(void) {
@@ -55,21 +58,8 @@ static void callback_display(void) {
     /* Aplica a câmera virtual (gluLookAt) */
     camera_aplicar_vista(&g_camera);
 
-    /* Eixos de referência simples para orientação inicial */
-    glBegin(GL_LINES);
-        /* Eixo X: Vermelho */
-        glColor3f(0.8f, 0.2f, 0.2f);
-        glVertex3f(-2.0f, 0.0f, 0.0f);
-        glVertex3f( 2.0f, 0.0f, 0.0f);
-        /* Eixo Y: Verde */
-        glColor3f(0.2f, 0.8f, 0.2f);
-        glVertex3f(0.0f, -2.0f, 0.0f);
-        glVertex3f(0.0f,  2.0f, 0.0f);
-        /* Eixo Z: Azul */
-        glColor3f(0.2f, 0.4f, 0.9f);
-        glVertex3f(0.0f, 0.0f, -2.0f);
-        glVertex3f(0.0f, 0.0f,  2.0f);
-    glEnd();
+    /* Renderiza a cena 3D do Elo Maluco e HUD */
+    render_desenhar_cena(&g_elo, &g_camera, g_exibirHUD, g_larguraJanela, g_alturaJanela);
 
     glutSwapBuffers();
 }

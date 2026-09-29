@@ -463,6 +463,104 @@ void render_desenhar_hud(const EloMaluco* elo, const Camera* cam, int largura, i
     glColor3f(0.6f, 0.65f, 0.7f);
     desenhar_texto_2d(20, altura - 285, "Transformacoes: Translacao, Rotacao e Escala");
 
+    /* Painel do Mini-mapa 4x4 (Visão Desdobrada / Planificada das 4 Faces) */
+    float mapaX = (float)largura - 195.0f;
+    float mapaY = (float)altura - 10.0f;
+    float mapaLargura = 185.0f;
+    float mapaAltura = 195.0f;
+
+    /* Fundo do mini-mapa */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.05f, 0.06f, 0.08f, 0.80f);
+    glBegin(GL_QUADS);
+        glVertex2f(mapaX, mapaY);
+        glVertex2f(mapaX + mapaLargura, mapaY);
+        glVertex2f(mapaX + mapaLargura, mapaY - mapaAltura);
+        glVertex2f(mapaX, mapaY - mapaAltura);
+    glEnd();
+    glDisable(GL_BLEND);
+
+    /* Moldura */
+    glColor3f(0.35f, 0.45f, 0.55f);
+    glLineWidth(1.2f);
+    glBegin(GL_LINE_LOOP);
+        glVertex2f(mapaX, mapaY);
+        glVertex2f(mapaX + mapaLargura, mapaY);
+        glVertex2f(mapaX + mapaLargura, mapaY - mapaAltura);
+        glVertex2f(mapaX, mapaY - mapaAltura);
+    glEnd();
+
+    glColor3f(1.0f, 0.85f, 0.2f);
+    desenhar_texto_2d(mapaX + 18.0f, mapaY - 24.0f, "MAPA 4x4 DAS FACES");
+
+    /* Desenha os 16 blocos da grade */
+    float celulaW = 34.0f;
+    float celulaH = 28.0f;
+    float gridStartX = mapaX + 18.0f;
+    float gridStartY = mapaY - 38.0f;
+
+    for (int l = 0; l < LINHAS; l++) {
+        for (int c = 0; c < COLUNAS; c++) {
+            float x0 = gridStartX + (float)c * (celulaW + 4.0f);
+            float y0 = gridStartY - (float)l * (celulaH + 4.0f);
+            float x1 = x0 + celulaW;
+            float y1 = y0 - celulaH;
+
+            const Peca* p = &elo->grade[l][c];
+            if (p->cor == COR_VAZIO) {
+                /* Espaço vazio: cinza escuro com cruz indicativa */
+                glColor3f(0.12f, 0.13f, 0.18f);
+                glBegin(GL_QUADS);
+                    glVertex2f(x0, y0);
+                    glVertex2f(x1, y0);
+                    glVertex2f(x1, y1);
+                    glVertex2f(x0, y1);
+                glEnd();
+                glColor3f(0.45f, 0.5f, 0.6f);
+                glBegin(GL_LINES);
+                    glVertex2f(x0, y0); glVertex2f(x1, y1);
+                    glVertex2f(x0, y1); glVertex2f(x1, y0);
+                glEnd();
+            } else {
+                /* Peça colorida */
+                glColor3f(p->r, p->g, p->b);
+                glBegin(GL_QUADS);
+                    glVertex2f(x0, y0);
+                    glVertex2f(x1, y0);
+                    glVertex2f(x1, y1);
+                    glVertex2f(x0, y1);
+                glEnd();
+
+                /* Indicador de altura: 'S', 'M', 'I' */
+                char letraH = (p->altura == ALTURA_SUPERIOR) ? 'S' : 
+                              (p->altura == ALTURA_INFERIOR) ? 'I' : 'M';
+                char strH[2] = { letraH, '\0' };
+                if (p->cor == COR_BRANCO || p->cor == COR_AMARELO) {
+                    glColor3f(0.1f, 0.1f, 0.1f);
+                } else {
+                    glColor3f(1.0f, 1.0f, 1.0f);
+                }
+                desenhar_texto_2d(x0 + 12.0f, y1 + 9.0f, strH);
+            }
+
+            /* Borda da célula com destaque para peça selecionada */
+            if (l == elo->linhaSelecionada && c == elo->colunaSelecionada) {
+                glColor3f(1.0f, 0.95f, 0.2f);
+                glLineWidth(2.2f);
+            } else {
+                glColor3f(0.25f, 0.3f, 0.38f);
+                glLineWidth(1.0f);
+            }
+            glBegin(GL_LINE_LOOP);
+                glVertex2f(x0, y0);
+                glVertex2f(x1, y0);
+                glVertex2f(x1, y1);
+                glVertex2f(x0, y1);
+            glEnd();
+        }
+    }
+
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
 

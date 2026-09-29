@@ -279,13 +279,21 @@ bool puzzle_mover_face_baixo(EloMaluco* elo) {
 }
 
 bool puzzle_executar_movimento(EloMaluco* elo, const char* acao) {
-    if (strcmp(acao, "rsd") == 0) return puzzle_rotacionar_superior_direita(elo);
-    if (strcmp(acao, "rse") == 0) return puzzle_rotacionar_superior_esquerda(elo);
-    if (strcmp(acao, "rid") == 0) return puzzle_rotacionar_inferior_direita(elo);
-    if (strcmp(acao, "rie") == 0) return puzzle_rotacionar_inferior_esquerda(elo);
-    if (strcmp(acao, "mfc") == 0) return puzzle_mover_face_cima(elo);
-    if (strcmp(acao, "mfb") == 0) return puzzle_mover_face_baixo(elo);
-    return false;
+    bool ok = false;
+    if (strcmp(acao, "rsd") == 0) ok = puzzle_rotacionar_superior_direita(elo);
+    else if (strcmp(acao, "rse") == 0) ok = puzzle_rotacionar_superior_esquerda(elo);
+    else if (strcmp(acao, "rid") == 0) ok = puzzle_rotacionar_inferior_direita(elo);
+    else if (strcmp(acao, "rie") == 0) ok = puzzle_rotacionar_inferior_esquerda(elo);
+    else if (strcmp(acao, "mfc") == 0) ok = puzzle_mover_face_cima(elo);
+    else if (strcmp(acao, "mfb") == 0) ok = puzzle_mover_face_baixo(elo);
+
+    if (ok && !elo->modoAutoPlay && elo->totalHistorico < 256) {
+        strncpy(elo->historicoMovimentos[elo->totalHistorico], acao, 3);
+        elo->historicoMovimentos[elo->totalHistorico][3] = '\0';
+        elo->totalHistorico++;
+    }
+
+    return ok;
 }
 
 void puzzle_embaralhar(EloMaluco* elo, int numMovimentos) {
@@ -300,22 +308,72 @@ void puzzle_embaralhar(EloMaluco* elo, int numMovimentos) {
     elo->resolvido = puzzle_eh_estado_objetivo(elo);
 }
 
-/* Sequência de solução demonstrativa (movimentos gravados para demonstração) */
-void puzzle_iniciar_solucao_demo(EloMaluco* elo) {
-    /* Exemplo de sequência elegante de resolução */
-    static const char* solucaoDemo[] = {
-        "mfc", "rsd", "mfb", "rie", "mfc", "rse", "mfb", "rid"
-    };
-    int count = sizeof(solucaoDemo) / sizeof(solucaoDemo[0]);
+/* Embaralha o puzzle de forma sequencial e animada */
+void puzzle_embaralhar_animado(EloMaluco* elo, int numMovimentos) {
+    const char* movimentosPossiveis[] = { "rsd", "rse", "rid", "rie", "mfc", "mfb" };
+    int total = sizeof(movimentosPossiveis) / sizeof(movimentosPossiveis[0]);
 
+    if (numMovimentos > 256) numMovimentos = 256;
     elo->totalFila = 0;
-    for (int i = 0; i < count && i < 256; i++) {
-        strncpy(elo->filaMovimentos[i], solucaoDemo[i], 3);
-        elo->filaMovimentos[i][3] = '\0';
+    elo->totalHistorico = 0;
+
+    for (int i = 0; i < numMovimentos; i++) {
+        int idx = rand() % total;
+        memcpy(elo->filaMovimentos[elo->totalFila], movimentosPossiveis[idx], 4);
+
+        /* Grava para a solução reversa conseguir solucionar */
+        memcpy(elo->historicoMovimentos[elo->totalHistorico], movimentosPossiveis[idx], 4);
+
         elo->totalFila++;
+        elo->totalHistorico++;
     }
+
     elo->indiceFila = 0;
     elo->modoAutoPlay = true;
+    elo->timerPassoAutoPlay = 0.0f;
+}
+
+static const char* obter_movimento_inverso(const char* acao) {
+    if (strcmp(acao, "rsd") == 0) return "rse";
+    if (strcmp(acao, "rse") == 0) return "rsd";
+    if (strcmp(acao, "rid") == 0) return "rie";
+    if (strcmp(acao, "rie") == 0) return "rid";
+    if (strcmp(acao, "mfc") == 0) return "mfb";
+    if (strcmp(acao, "mfb") == 0) return "mfc";
+    return acao;
+}
+
+/* Sequência de solução demonstrativa inteligente */
+void puzzle_iniciar_solucao_demo(EloMaluco* elo) {
+    if (elo->totalHistorico > 0) {
+        /* Constrói a solução inversa revertendo passo a passo */
+        elo->totalFila = 0;
+        for (int i = elo->totalHistorico - 1; i >= 0; i--) {
+            const char* inv = obter_movimento_inverso(elo->historicoMovimentos[i]);
+            memcpy(elo->filaMovimentos[elo->totalFila], inv, 4);
+            elo->totalFila++;
+        }
+        elo->totalHistorico = 0;
+        elo->indiceFila = 0;
+        elo->modoAutoPlay = true;
+        elo->timerPassoAutoPlay = 0.0f;
+    } else {
+        /* Se não há histórico (estava resolvido), primeiro demonstra embaralhar e depois resolver */
+        static const char* sequenciaDemo[] = {
+            "mfc", "rsd", "mfb", "rie", "mfc", "rse", "mfb", "rid",
+            "rie", "mfb", "rsd", "mfc", "rid", "mfb", "rse", "mfc"
+        };
+        int count = sizeof(sequenciaDemo) / sizeof(sequenciaDemo[0]);
+
+        elo->totalFila = 0;
+        for (int i = 0; i < count && i < 256; i++) {
+            memcpy(elo->filaMovimentos[i], sequenciaDemo[i], 4);
+            elo->totalFila++;
+        }
+        elo->indiceFila = 0;
+        elo->modoAutoPlay = true;
+        elo->timerPassoAutoPlay = 0.0f;
+    }
 }
 
 void puzzle_proximo_passo_demo(EloMaluco* elo) {

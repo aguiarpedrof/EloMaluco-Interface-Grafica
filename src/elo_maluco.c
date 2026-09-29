@@ -82,7 +82,7 @@ static void callback_keyboard(unsigned char key, int x, int y) {
             break;
         case 'e':
         case 'E':
-            puzzle_embaralhar(&g_elo, 20);
+            puzzle_embaralhar_animado(&g_elo, 12);
             break;
         case 'd':
         case 'D':
@@ -178,6 +178,50 @@ static void callback_timer(int valor) {
     glutTimerFunc(16, callback_timer, 0);
 }
 
+/* Callback do Menu de Contexto do Botão Direito */
+static void callback_menu(int opcao) {
+    switch (opcao) {
+        case 1: puzzle_rotacionar_superior_direita(&g_elo); break;
+        case 2: puzzle_rotacionar_superior_esquerda(&g_elo); break;
+        case 3: puzzle_rotacionar_inferior_direita(&g_elo); break;
+        case 4: puzzle_rotacionar_inferior_esquerda(&g_elo); break;
+        case 5: puzzle_mover_face_cima(&g_elo); break;
+        case 6: puzzle_mover_face_baixo(&g_elo); break;
+        case 7: puzzle_embaralhar_animado(&g_elo, 12); break;
+        case 8: puzzle_iniciar_solucao_demo(&g_elo); break;
+        case 9: puzzle_alternar_turntable(&g_elo); break;
+        case 10: puzzle_selecionar_proxima_peca(&g_elo); break;
+        case 11: puzzle_resetar(&g_elo); break;
+        case 12: camera_resetar(&g_camera); break;
+        case 13: g_exibirHUD = !g_exibirHUD; break;
+        case 99: exit(0); break;
+    }
+    glutPostRedisplay();
+}
+
+static void criar_menu_contexto(void) {
+    int subMenuMov = glutCreateMenu(callback_menu);
+    glutAddMenuEntry("Girar Superior Direita (rsd)", 1);
+    glutAddMenuEntry("Girar Superior Esquerda (rse)", 2);
+    glutAddMenuEntry("Girar Inferior Direita (rid)", 3);
+    glutAddMenuEntry("Girar Inferior Esquerda (rie)", 4);
+    glutAddMenuEntry("Mover Face Cima (mfc)", 5);
+    glutAddMenuEntry("Mover Face Baixo (mfb)", 6);
+
+    glutCreateMenu(callback_menu);
+    glutAddSubMenu("Movimentos do Elo", subMenuMov);
+    glutAddMenuEntry("Embaralhar (Animado)", 7);
+    glutAddMenuEntry("Executar Solucao Demo (Auto-play)", 8);
+    glutAddMenuEntry("Alternar Rotacao Turntable", 9);
+    glutAddMenuEntry("Selecionar / Pulsar Peca (Escala)", 10);
+    glutAddMenuEntry("Reiniciar Puzzle", 11);
+    glutAddMenuEntry("Resetar Camera", 12);
+    glutAddMenuEntry("Alternar HUD", 13);
+    glutAddMenuEntry("Sair", 99);
+
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -198,6 +242,9 @@ int main(int argc, char** argv) {
     glutMotionFunc(callback_motion);
     glutTimerFunc(16, callback_timer, 0);
 
+    /* Criação do menu de contexto de clique direito */
+    criar_menu_contexto();
+
     printf("========================================================\n");
     printf(" Elo Maluco 3D - Computacao Grafica (ECOI24 - UNIFEI)  \n");
     printf("========================================================\n");
@@ -205,7 +252,10 @@ int main(int argc, char** argv) {
     printf(" [L/J] Rotacionar anel inferior (Direita / Esquerda)\n");
     printf(" [W/S] Mover face (Cima / Baixo)\n");
     printf(" [E] Embaralhar  |  [R] Resetar  |  [C] Resetar Camera\n");
+    printf(" [Espaco] Solucao Demonstrativa (Auto-play)\n");
+    printf(" [T] Modo Turntable  |  [P/Tab] Selecionar/Pulsar Peca\n");
     printf(" [Mouse Esquerdo + Arrastar] Rotacao orbital da camera\n");
+    printf(" [Mouse Direito] Menu de opcoes interativo\n");
     printf(" [Scroll / +/-] Zoom in / Zoom out\n");
     printf("========================================================\n");
 

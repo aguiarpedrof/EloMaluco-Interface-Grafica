@@ -68,6 +68,10 @@ typedef struct {
     int linhaSelecionada;
     int colunaSelecionada;
     
+    /* Histórico de movimentos para reversão/solução inteligente */
+    char historicoMovimentos[256][4];
+    int totalHistorico;
+
     /* Fila de movimentos automáticos (para demonstração/solução/embaralhamento) */
     char filaMovimentos[256][4];
     int totalFila;
@@ -96,6 +100,7 @@ bool puzzle_executar_movimento(EloMaluco* elo, const char* acao);
 
 /* Embaralhamento e Solução Demonstrativa */
 void puzzle_embaralhar(EloMaluco* elo, int numMovimentos);
+void puzzle_embaralhar_animado(EloMaluco* elo, int numMovimentos);
 void puzzle_iniciar_solucao_demo(EloMaluco* elo);
 void puzzle_proximo_passo_demo(EloMaluco* elo);
 

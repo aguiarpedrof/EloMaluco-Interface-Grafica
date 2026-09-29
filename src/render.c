@@ -19,9 +19,49 @@ static const int SEGMENTOS_CIRCULO = 48;
 static const int SEGMENTOS_PECA = 12;
 
 void render_inicializar(void) {
-    /* Configuração de normais automáticas */
+    /* Configuração de normais automáticas e sombreamento Gouraud/Phong suave */
     glEnable(GL_NORMALIZE);
     glShadeModel(GL_SMOOTH);
+
+    /* Habilita o pipeline de iluminação */
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+
+    /* Luz Principal (Key Light) - Diagonal superior frontal */
+    GLfloat luz0Pos[]      = { 5.0f, 9.0f, 7.0f, 1.0f };
+    GLfloat luz0Ambiente[] = { 0.25f, 0.25f, 0.28f, 1.0f };
+    GLfloat luz0Difusa[]   = { 0.85f, 0.85f, 0.85f, 1.0f };
+    GLfloat luz0Especular[]= { 0.95f, 0.95f, 0.95f, 1.0f };
+
+    glLightfv(GL_LIGHT0, GL_POSITION, luz0Pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, luz0Ambiente);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, luz0Difusa);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, luz0Especular);
+
+    /* Luz de Preenchimento (Fill Light) - Oposta para suavizar sombras */
+    GLfloat luz1Pos[]      = { -6.0f, 3.0f, -6.0f, 1.0f };
+    GLfloat luz1Ambiente[] = { 0.05f, 0.05f, 0.08f, 1.0f };
+    GLfloat luz1Difusa[]   = { 0.35f, 0.35f, 0.40f, 1.0f };
+    GLfloat luz1Especular[]= { 0.25f, 0.25f, 0.25f, 1.0f };
+
+    glLightfv(GL_LIGHT1, GL_POSITION, luz1Pos);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, luz1Ambiente);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, luz1Difusa);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, luz1Especular);
+
+    /* Iluminação global ambiente */
+    GLfloat luzGlobalAmbiente[] = { 0.20f, 0.20f, 0.22f, 1.0f };
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, luzGlobalAmbiente);
+
+    /* Rastreamento de cores para materiais: glColor define ambiente e difusa */
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
+    /* Brilho especular das peças plásticas (efeito brilhante/lustroso) */
+    GLfloat matEspecular[] = { 0.80f, 0.80f, 0.80f, 1.0f };
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, matEspecular);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 64.0f);
 }
 
 /* Desenha o cilindro central metálico onde as peças se movimentam */
@@ -326,6 +366,7 @@ void render_desenhar_hud(const EloMaluco* elo, const Camera* cam, int largura, i
     glLoadIdentity();
 
     glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
 
     /* Fundo translúcido para o painel de controles */
     glEnable(GL_BLEND);
@@ -375,6 +416,7 @@ void render_desenhar_hud(const EloMaluco* elo, const Camera* cam, int largura, i
     desenhar_texto_2d(20, altura - 190, "[Scroll / +/-] Zoom da Camera");
     desenhar_texto_2d(20, altura - 208, "[H] Ocultar/Exibir este painel");
 
+    glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
 
     glMatrixMode(GL_PROJECTION);
